@@ -1,13 +1,13 @@
 package core
 
-func GET(key string) string {
-	return database[key]
+func GET(key []byte) []byte {
+	return database[string(key)]
 }
 
-func SET(key, value string) {
-	database[key] = value
+func SET(key, value []byte) {
+	database[string(key)] = value
 }
 
-func DEL(key string) {
-	delete(database, key)
+func DEL(key []byte) {
+	delete(database, string(key))
 }

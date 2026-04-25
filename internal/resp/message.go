@@ -4,24 +4,23 @@ import "fmt"
 
 type Message struct {
 	MessageType MessageType
-	String      string
-	Integer     int
+	Bytes       []byte
 	Values      []Message
 }
 
 func (m *Message) ToRaw() string {
 	switch m.MessageType {
 	case SimpleStringMessageType:
-		return fmt.Sprintf("+%s\r\n", m.String)
+		return fmt.Sprintf("+%s\r\n", string(m.Bytes))
 
 	case SimpleErrorMessageType:
-		return fmt.Sprintf("-%s\r\n", m.String)
+		return fmt.Sprintf("-%s\r\n", string(m.Bytes))
 
 	case IntegerMessageType:
-		return fmt.Sprintf(":%d\r\n", m.Integer)
+		return fmt.Sprintf(":%s\r\n", string(m.Bytes))
 
 	case BulkStringMessageType:
-		return fmt.Sprintf("$%d\r\n%s\r\n", len(m.String), m.String)
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(m.Bytes), string(m.Bytes))
 
 	case ArrayMessageType:
 		var rawMsgs string

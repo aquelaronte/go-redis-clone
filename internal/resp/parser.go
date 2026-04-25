@@ -19,8 +19,7 @@ func Parse(received []byte) (*Message, []byte, error) {
 
 		return &Message{
 			MessageType: SimpleStringMessageType,
-			String:      string(value),
-			Integer:     0,
+			Bytes:       value,
 		}, remaining, nil
 
 	case '-':
@@ -28,23 +27,15 @@ func Parse(received []byte) (*Message, []byte, error) {
 
 		return &Message{
 			MessageType: SimpleErrorMessageType,
-			String:      string(value),
-			Integer:     0,
+			Bytes:       value,
 		}, remaining, nil
 
 	case ':':
 		value, remaining := readUntilNextCRLF(received[1:])
 
-		parsed, err := strconv.Atoi(string(value))
-
-		if err != nil {
-			return nil, nil, fmt.Errorf("invalid message %v", err)
-		}
-
 		return &Message{
 			MessageType: IntegerMessageType,
-			Integer:     parsed,
-			String:      "",
+			Bytes:       value,
 		}, remaining, nil
 
 	case '$':
@@ -59,8 +50,7 @@ func Parse(received []byte) (*Message, []byte, error) {
 
 		return &Message{
 			MessageType: BulkStringMessageType,
-			String:      string(value),
-			Integer:     0,
+			Bytes:       value,
 		}, valueRemaining, nil
 
 	case '*':
@@ -70,7 +60,7 @@ func Parse(received []byte) (*Message, []byte, error) {
 			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
-		var values []Message
+		values := make([]Message, 0, length)
 		lastValue := remaining
 
 		for range length {
@@ -87,7 +77,7 @@ func Parse(received []byte) (*Message, []byte, error) {
 		return &Message{
 			MessageType: ArrayMessageType,
 			Values:      values,
-		}, remaining, nil
+		}, lastValue, nil
 
 	default:
 		return nil, nil, errors.New("invalid message")

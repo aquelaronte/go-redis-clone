@@ -21,38 +21,34 @@ func HandleCommand(received []byte, conn net.Conn) {
 	}
 
 	command := msg.Values[0]
+	comparer := resp.Comparer(command)
+	send := resp.Sender(conn)
 
-	switch command.String {
-	case "GET":
-		key := msg.Values[1].String
+	if comparer("get") {
+		key := msg.Values[1].Bytes
+		value := core.GET(key)
 
-		fmt.Fprintf(conn, "+%s\r\n", core.GET(key))
+		if value == nil {
+			send([]byte("$-1\r\n"))
+			return
+		}
 
-		return
-	case "SET":
-		key := msg.Values[1].String
-		value := msg.Values[2].String
+		send(value)
+	} else if comparer("set") {
+		key := msg.Values[1].Bytes
+		value := msg.Values[2].ToRaw()
 
-		core.SET(key, value)
+		core.SET(key, []byte(value))
 
-		fmt.Fprintf(conn, "+OK\r\n")
-
-		return
-	case "DEL":
-		key := msg.Values[1].String
+		send([]byte("+OK\r\n"))
+	} else if comparer("del") {
+		key := msg.Values[1].Bytes
 
 		core.DEL(key)
-
-		fmt.Fprintf(conn, "+OK\r\n")
-		return
-
-	case "PING":
-		fmt.Fprintf(conn, "+PONG\r\n")
-	case "COMMAND":
-		fmt.Fprintf(conn, "+OK\r\n")
-		return
-	default:
-		fmt.Fprint(conn, "-ERR: invalid command")
+		send([]byte("+OK\r\n"))
+	} else if comparer("ping") {
+		send([]byte("+PONG\r\n"))
+	} else if comparer("command") {
+		send([]byte("+OK\r\n"))
 	}
-
 }

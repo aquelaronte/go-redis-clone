@@ -17,3 +17,7 @@ func (i MessageType) String() string {
 func (i MessageType) Index() int {
 	return int(i)
 }
+
+func (i MessageType) RESP() byte {
+	return [...]byte{'+', '-', ':', '$', '*'}[i]
+}

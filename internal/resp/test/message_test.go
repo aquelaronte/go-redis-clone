@@ -13,32 +13,32 @@ func TestMessage(t *testing.T) {
 	}{
 		{
 			Name:     "simple string",
-			Input:    resp.Message{MessageType: resp.SimpleStringMessageType, String: "OK"},
+			Input:    resp.Message{MessageType: resp.SimpleStringMessageType, Bytes: []byte("OK")},
 			Expected: "+OK\r\n",
 		},
 		{
 			Name:     "simple error",
-			Input:    resp.Message{MessageType: resp.SimpleErrorMessageType, String: "ERR"},
+			Input:    resp.Message{MessageType: resp.SimpleErrorMessageType, Bytes: []byte("ERR")},
 			Expected: "-ERR\r\n",
 		},
 		{
 			Name:     "integer",
-			Input:    resp.Message{MessageType: resp.IntegerMessageType, Integer: 12},
+			Input:    resp.Message{MessageType: resp.IntegerMessageType, Bytes: []byte("12")},
 			Expected: ":12\r\n",
 		},
 		{
 			Name:     "bulk string",
-			Input:    resp.Message{MessageType: resp.BulkStringMessageType, String: "hello"},
+			Input:    resp.Message{MessageType: resp.BulkStringMessageType, Bytes: []byte("hello")},
 			Expected: "$5\r\nhello\r\n",
 		},
 		{
 			Name: "bulk strings array",
 			Input: resp.Message{MessageType: resp.ArrayMessageType, Values: []resp.Message{
 				{
-					MessageType: resp.BulkStringMessageType, String: "hello",
+					MessageType: resp.BulkStringMessageType, Bytes: []byte("hello"),
 				},
 				{
-					MessageType: resp.BulkStringMessageType, String: "world",
+					MessageType: resp.BulkStringMessageType, Bytes: []byte("world"),
 				},
 			}},
 			Expected: "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n",
@@ -47,10 +47,10 @@ func TestMessage(t *testing.T) {
 			Name: "integers array",
 			Input: resp.Message{MessageType: resp.ArrayMessageType, Values: []resp.Message{
 				{
-					MessageType: resp.IntegerMessageType, Integer: 15,
+					MessageType: resp.IntegerMessageType, Bytes: []byte("15"),
 				},
 				{
-					MessageType: resp.IntegerMessageType, Integer: 5,
+					MessageType: resp.IntegerMessageType, Bytes: []byte("5"),
 				},
 			}},
 			Expected: "*2\r\n:15\r\n:5\r\n",
@@ -59,13 +59,13 @@ func TestMessage(t *testing.T) {
 			Name: "mixed array",
 			Input: resp.Message{MessageType: resp.ArrayMessageType, Values: []resp.Message{
 				{
-					MessageType: resp.BulkStringMessageType, String: "word",
+					MessageType: resp.BulkStringMessageType, Bytes: []byte("word"),
 				},
 				{
-					MessageType: resp.IntegerMessageType, Integer: 15,
+					MessageType: resp.IntegerMessageType, Bytes: []byte("15"),
 				},
 				{
-					MessageType: resp.SimpleStringMessageType, String: "OK",
+					MessageType: resp.SimpleStringMessageType, Bytes: []byte("OK"),
 				},
 			}},
 			Expected: "*3\r\n$4\r\nword\r\n:15\r\n+OK\r\n",
@@ -77,7 +77,7 @@ func TestMessage(t *testing.T) {
 			result := tt.Input.ToRaw()
 
 			if result != tt.Expected {
-				t.Errorf("expected %s, received %s", tt.Expected, result)
+				t.Errorf("expected %q, received %q", tt.Expected, result)
 			}
 		})
 	}
