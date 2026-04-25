@@ -7,7 +7,8 @@ import (
 
 func TestParse(t *testing.T) {
 	t.Run("simple string", func(t *testing.T) {
-		msg, _, _ := resp.Parse("+OK\r\n")
+		input := []byte("+OK\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if msg.String != "OK" {
 			t.Errorf("expected OK, got %s", msg.String)
@@ -15,7 +16,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("simple error", func(t *testing.T) {
-		msg, _, _ := resp.Parse("-Error: Invalid Message\r\n")
+		input := []byte("-Error: Invalid Message\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if msg.String != "Error: Invalid Message" {
 			t.Errorf("expected Error: Invalid Message, got %s", msg.String)
@@ -23,7 +25,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("integer", func(t *testing.T) {
-		msg, _, _ := resp.Parse(":102\r\n")
+		input := []byte(":102\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if msg.Integer != 102 {
 			t.Errorf("expected 102, got %d", msg.Integer)
@@ -31,7 +34,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("bulk string", func(t *testing.T) {
-		msg, _, _ := resp.Parse("$5\r\nhello\r\n")
+		input := []byte("$5\r\nhello\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if msg.String != "hello" {
 			t.Errorf("expected hello, got %q", msg.String)
@@ -39,7 +43,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("simple strings array", func(t *testing.T) {
-		msg, _, _ := resp.Parse("*2\r\n+OK\r\n+NO\r\n")
+		input := []byte("*2\r\n+OK\r\n+NO\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if len(msg.Values) != 2 {
 			t.Errorf("expected 2 of length, got %d", len(msg.Values))
@@ -55,7 +60,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("bulk strings array", func(t *testing.T) {
-		msg, _, _ := resp.Parse("*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n")
+		input := []byte("*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if len(msg.Values) != 2 {
 			t.Errorf("expected 2 of length, got %d", len(msg.Values))
@@ -71,7 +77,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("integers array", func(t *testing.T) {
-		msg, _, _ := resp.Parse("*2\r\n:15\r\n:5\r\n")
+		input := []byte("*2\r\n:15\r\n:5\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if len(msg.Values) != 2 {
 			t.Errorf("expected 2 of length, got %d", len(msg.Values))
@@ -87,7 +94,8 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("mixed array", func(t *testing.T) {
-		msg, _, _ := resp.Parse("*3\r\n$4\r\nword\r\n:15\r\n+OK\r\n")
+		input := []byte("*3\r\n$4\r\nword\r\n:15\r\n+OK\r\n")
+		msg, _, _ := resp.Parse(input)
 
 		if len(msg.Values) != 3 {
 			t.Errorf("expected 2 of length, got %d", len(msg.Values))

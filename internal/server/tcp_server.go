@@ -39,6 +39,8 @@ func handleConnection(conn net.Conn) {
 			break
 		}
 
-		HandleCommand(string(buffer[:n]), conn)
+		receivedData := buffer[:n]
+
+		HandleCommand(receivedData, conn)
 	}
 }

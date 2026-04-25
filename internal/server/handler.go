@@ -7,7 +7,7 @@ import (
 	"net"
 )
 
-func HandleCommand(received string, conn net.Conn) {
+func HandleCommand(received []byte, conn net.Conn) {
 	msg, _, err := resp.Parse(received)
 
 	if err != nil {

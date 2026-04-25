@@ -4,42 +4,41 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
-func Parse(received string) (*Message, string, error) {
-	if received == "" {
-		return nil, "", errors.New("invalid message")
+func Parse(received []byte) (*Message, []byte, error) {
+	if len(received) == 0 {
+		return nil, nil, errors.New("invalid message")
 	}
 
 	firstCharacter := received[0]
 
 	switch firstCharacter {
 	case '+':
-		str, remaining := readUntilNextCRLF(received[1:])
+		value, remaining := readUntilNextCRLF(received[1:])
 
 		return &Message{
 			MessageType: SimpleStringMessageType,
-			String:      str,
+			String:      string(value),
 			Integer:     0,
 		}, remaining, nil
 
 	case '-':
-		str, remaining := readUntilNextCRLF(received[1:])
+		value, remaining := readUntilNextCRLF(received[1:])
 
 		return &Message{
 			MessageType: SimpleErrorMessageType,
-			String:      str,
+			String:      string(value),
 			Integer:     0,
 		}, remaining, nil
 
 	case ':':
-		str, remaining := readUntilNextCRLF(received[1:])
+		value, remaining := readUntilNextCRLF(received[1:])
 
-		parsed, err := strconv.Atoi(str)
+		parsed, err := strconv.Atoi(string(value))
 
 		if err != nil {
-			return nil, "", fmt.Errorf("invalid message %v", err)
+			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
 		return &Message{
@@ -49,25 +48,26 @@ func Parse(received string) (*Message, string, error) {
 		}, remaining, nil
 
 	case '$':
-		_, index, _, err := retrieveLength(received[1:])
+		length, remaining, err := retrieveLength(received[1:])
 
 		if err != nil {
-			return nil, "", fmt.Errorf("invalid message %v", err)
+			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
-		str, remaining := readUntilNextCRLF(received[index:])
+		value := remaining[:length]
+		valueRemaining := remaining[length+2:]
 
 		return &Message{
 			MessageType: BulkStringMessageType,
-			String:      str,
+			String:      string(value),
 			Integer:     0,
-		}, remaining, nil
+		}, valueRemaining, nil
 
 	case '*':
-		length, _, remaining, err := retrieveLength(received[1:])
+		length, remaining, err := retrieveLength(received[1:])
 
 		if err != nil {
-			return nil, "", fmt.Errorf("invalid message %v", err)
+			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
 		var values []Message
@@ -77,7 +77,7 @@ func Parse(received string) (*Message, string, error) {
 			message, remaining, err := Parse(lastValue)
 
 			if err != nil {
-				return nil, "", fmt.Errorf("invalid message %v", err)
+				return nil, nil, fmt.Errorf("invalid message %v", err)
 			}
 
 			values = append(values, *message)
@@ -90,24 +90,28 @@ func Parse(received string) (*Message, string, error) {
 		}, remaining, nil
 
 	default:
-		return nil, "", errors.New("invalid message")
+		return nil, nil, errors.New("invalid message")
 	}
 }
 
-func readUntilNextCRLF(received string) (string, string) {
-	parts := strings.Split(received, "\r\n")
+func readUntilNextCRLF(received []byte) ([]byte, []byte) {
+	for i := range received {
+		if received[i] == '\r' && received[i+1] == '\n' {
+			value := received[:i]
+			remaining := received[i+2:] // skip next \r\n bytes
 
-	return parts[0], strings.Join(parts[1:], "\r\n")
+			return value, remaining
+		}
+	}
+
+	return nil, nil
 }
 
-func retrieveLength(received string) (int, int, string, error) {
-	strLength, remaining := readUntilNextCRLF(received)
+func retrieveLength(received []byte) (int, []byte, error) {
+	firstPart, remaining := readUntilNextCRLF(received)
+	strLength := string(firstPart)
 
 	parsedLength, err := strconv.Atoi(strLength)
 
-	if err != nil {
-		return 0, 0, remaining, err
-	}
-
-	return parsedLength, len(strLength) + 3, remaining, nil
+	return parsedLength, remaining, err
 }
