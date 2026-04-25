@@ -9,3 +9,6 @@ run:
 
 build:
 	go build -o ./bin/redis-server/main ./cmd/redis-server/main.go 
+
+start:
+	./bin/redis-server/main
