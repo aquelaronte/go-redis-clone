@@ -1,0 +1,13 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/redis-server ./cmd/redis-server"
+  bin = "./tmp/redis-server"
+  full_bin = "./tmp/redis-server"
+  include_ext = ["go", "toml", "yaml", "yml"]
+  exclude_dir = ["tmp", "bin", "vendor", ".git", ".buf-deps"]
+  delay = 1000
+
+[misc]
+  clean_on_exit = true
