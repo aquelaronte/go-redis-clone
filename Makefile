@@ -12,7 +12,7 @@ run:
 	go run ./cmd/redis-server/main.go
 
 build:
-	go build -o ./bin/redis-server/main ./cmd/redis-server/main.go 
+	go build -o ./bin/redis-server ./cmd/redis-server 
 
 start:
-	./bin/redis-server/main
+	./bin/redis-server
