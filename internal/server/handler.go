@@ -9,25 +9,26 @@ import (
 
 func HandleCommand(received []byte, conn net.Conn) {
 	msg, _, err := resp.Parse(received)
+	sender := resp.NewSender(conn)
 
 	if err != nil {
-		fmt.Fprintf(conn, "-ERR: error parsing the command: %s\r\n", err)
+		sender.SendError(fmt.Sprintf("error parsing the command: %s", err))
 		return
 	}
 
 	if msg.MessageType != resp.ArrayMessageType || len(msg.Values) == 0 {
-		fmt.Fprintf(conn, "-ERR: invalid command: %s\r\n", err)
+		sender.SendError("invalid command")
 		return
 	}
 
 	command := msg.Values[0]
-	comparer := resp.Comparer(command)
-	send := resp.Sender(conn)
+	comparer := resp.NewComparer(command)
 	valuesLength := len(msg.Values)
 
-	if comparer("get") {
+	switch comparer.RetrieveCommand(SupportedCommands) {
+	case "get":
 		if valuesLength != 2 {
-			send(fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", "get"))
+			sender.SendWrongNumberOfArguments("get")
 			return
 		}
 
@@ -35,14 +36,14 @@ func HandleCommand(received []byte, conn net.Conn) {
 		value := core.GET(key)
 
 		if value == nil {
-			send([]byte("$-1\r\n"))
+			sender.SendNil()
 			return
 		}
 
-		send(value)
-	} else if comparer("set") {
+		sender.Send(value)
+	case "set":
 		if valuesLength != 3 {
-			send(fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", "set"))
+			sender.SendWrongNumberOfArguments("set")
 			return
 		}
 
@@ -51,31 +52,31 @@ func HandleCommand(received []byte, conn net.Conn) {
 
 		core.SET(key, []byte(value))
 
-		send([]byte(":1\r\n"))
-	} else if comparer("del") {
+		sender.SendInteger(1)
+	case "del":
 		if valuesLength != 2 {
-			send(fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", "del"))
+			sender.SendWrongNumberOfArguments("del")
 			return
 		}
 
 		key := msg.Values[1].Bytes
 
 		core.DEL(key)
-		send([]byte(":1\r\n"))
-	} else if comparer("ping") {
+		sender.SendInteger(1)
+	case "ping":
 		switch valuesLength {
 		case 1:
-			send([]byte("+PONG\r\n"))
+			sender.SendMsg("PONG")
 		case 2:
 			value := msg.Values[1]
 
-			send(fmt.Appendf(nil, "$%d\r\n%s\r\n", len(value.Bytes), string(value.Bytes)))
+			sender.SendMsg(string(value.Bytes))
 		default:
-			send(fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", "ping"))
+			sender.SendWrongNumberOfArguments("ping")
 		}
-	} else if comparer("command") {
-		send([]byte(":1\r\n"))
-	} else {
-		send(fmt.Appendf(nil, "-ERR unknown command '%s'", string(command.Bytes)))
+	case "command":
+		sender.SendInteger(1)
+	default:
+		sender.SendUnknownCommand(string(command.Bytes))
 	}
 }

@@ -2,12 +2,30 @@ package resp
 
 import "bytes"
 
-func Compare(base Message, target string) bool {
-	return bytes.EqualFold(base.Bytes, []byte(target))
+type Comparer struct {
+	base Message
 }
 
-func Comparer(base Message) func(target string) bool {
-	return func(target string) bool {
-		return Compare(base, target)
+func NewComparer(base Message) *Comparer {
+	return &Comparer{
+		base: base,
 	}
+}
+
+func (c *Comparer) Compare(target string) bool {
+	return bytes.EqualFold(c.base.Bytes, []byte(target))
+}
+
+func (c *Comparer) RetrieveCommand(supportedCommands []string) string {
+	for _, cmd := range supportedCommands {
+		if c.Compare(cmd) {
+			return cmd
+		}
+	}
+
+	return ""
+}
+
+func Compare(base Message, target string) bool {
+	return bytes.EqualFold(base.Bytes, []byte(target))
 }
