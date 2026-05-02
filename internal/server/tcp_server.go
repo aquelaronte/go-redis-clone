@@ -51,8 +51,8 @@ func handleConnection(conn net.Conn) {
 
 		messages, r, err := parser.Parse(receivedData)
 
-		if r != nil {
-			remaining = append(remaining, r...)
+		if len(r) != 0 {
+			remaining = r
 		}
 
 		for i := range messages {

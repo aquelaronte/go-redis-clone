@@ -6,4 +6,5 @@ var SupportedCommands []string = []string{
 	"del",
 	"ping",
 	"command",
+	"expire",
 }

@@ -4,6 +4,7 @@ import (
 	"go-redis-clone/internal/core"
 	"go-redis-clone/internal/resp"
 	"net"
+	"strconv"
 )
 
 func handleCommand(msg resp.Message, conn net.Conn) {
@@ -45,7 +46,7 @@ func handleCommand(msg resp.Message, conn net.Conn) {
 
 		core.SET(key, []byte(value))
 
-		sender.SendInteger(1)
+		sender.SendSimpleString("OK")
 	case "del":
 		if valuesLength != 2 {
 			sender.SendWrongNumberOfArguments("del")
@@ -54,8 +55,13 @@ func handleCommand(msg resp.Message, conn net.Conn) {
 
 		key := msg.Values[1].Bytes
 
-		core.DEL(key)
-		sender.SendInteger(1)
+		ok := core.DEL(key)
+
+		if ok {
+			sender.SendInteger(1)
+		} else {
+			sender.SendInteger(0)
+		}
 	case "ping":
 		switch valuesLength {
 		case 1:
@@ -69,6 +75,28 @@ func handleCommand(msg resp.Message, conn net.Conn) {
 		}
 	case "command":
 		sender.SendInteger(1)
+	case "expire":
+		if valuesLength != 3 {
+			sender.SendWrongNumberOfArguments("expire")
+			return
+		}
+
+		key := msg.Values[1].Bytes
+		seconds := msg.Values[2].Bytes
+
+		parsedSeconds, err := strconv.Atoi(string(seconds))
+
+		if err != nil {
+			sender.SendError("ERR value is not an integer or out of range")
+		}
+
+		ok := core.EXPIRE(key, int64(parsedSeconds))
+
+		if ok {
+			sender.SendInteger(1)
+		} else {
+			sender.SendInteger(0)
+		}
 	default:
 		sender.SendUnknownCommand(string(command.Bytes))
 	}
