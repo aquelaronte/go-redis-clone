@@ -33,6 +33,10 @@ func (s *Sender) SendBulkString(msg string) {
 	s.SendMsg(fmt.Sprintf("$%d\r\n%s\r\n", len(msg), msg))
 }
 
+func (s *Sender) SendSimpleString(msg string) {
+	s.SendMsg(fmt.Sprintf("+%s\r\n", msg))
+}
+
 func (s *Sender) SendNil() {
 	s.SendMsg("$-1\r\n")
 }

@@ -1,20 +1,13 @@
 package server
 
 import (
-	"fmt"
 	"go-redis-clone/internal/core"
 	"go-redis-clone/internal/resp"
 	"net"
 )
 
-func HandleCommand(received []byte, conn net.Conn) {
-	msg, _, err := resp.Parse(received)
+func handleCommand(msg resp.Message, conn net.Conn) {
 	sender := resp.NewSender(conn)
-
-	if err != nil {
-		sender.SendError(fmt.Sprintf("error parsing the command: %s", err))
-		return
-	}
 
 	if msg.MessageType != resp.ArrayMessageType || len(msg.Values) == 0 {
 		sender.SendError("invalid command")
@@ -66,7 +59,7 @@ func HandleCommand(received []byte, conn net.Conn) {
 	case "ping":
 		switch valuesLength {
 		case 1:
-			sender.SendMsg("PONG")
+			sender.SendSimpleString("PONG")
 		case 2:
 			value := msg.Values[1]
 

@@ -2,18 +2,20 @@ package server
 
 import (
 	"fmt"
+	"go-redis-clone/internal/resp/parser"
 	"net"
 )
 
+// Run a redis clone server in port 6379
 func Start() {
 	listener, err := net.Listen("tcp", ":6379")
 
 	if err != nil {
-		panic("error connecting tcp server")
+		panic(fmt.Errorf("error connecting tcp server %v", err))
 	}
 
 	defer listener.Close()
-	fmt.Println("listening on port 6379")
+	fmt.Println("redis clone listening on port 6379")
 
 	for {
 		conn, err := listener.Accept()
@@ -27,9 +29,13 @@ func Start() {
 	}
 }
 
+// handle connections by parsing RESP messages, performing changes to the database in
+// RAM, and responding to the connected client
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	buffer := make([]byte, 4096)
+
+	var remaining []byte
 
 	for {
 		n, err := conn.Read(buffer)
@@ -39,8 +45,18 @@ func handleConnection(conn net.Conn) {
 			break
 		}
 
-		receivedData := buffer[:n]
+		// remaining buffer from the before call + new buffer
+		receivedData := append(remaining, buffer[:n]...)
+		remaining = nil // reset remaining data
 
-		HandleCommand(receivedData, conn)
+		messages, r, err := parser.Parse(receivedData)
+
+		if r != nil {
+			remaining = append(remaining, r...)
+		}
+
+		for i := range messages {
+			handleCommand(messages[i], conn)
+		}
 	}
 }
