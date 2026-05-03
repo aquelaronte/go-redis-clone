@@ -46,7 +46,7 @@ func handleConnection(conn net.Conn) {
 		n, err := conn.Read(buffer)
 
 		if err != nil {
-			fmt.Println("connection closed")
+			// connection closed
 			break
 		}
 

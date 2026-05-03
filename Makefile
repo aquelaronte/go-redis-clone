@@ -4,6 +4,9 @@ test-verbose:
 test:
 	go test ./...
 
+bench:
+	go test -bench=. -benchmem -run=^$$ ./...
+
 # Run the API server in dev mode with hot-reload on code changes (requires air: go install github.com/air-verse/air@latest)
 dev:
 	air
