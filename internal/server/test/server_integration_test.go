@@ -3,6 +3,7 @@ package server_test
 import (
 	"fmt"
 	"go-redis-clone/internal/server"
+	"io"
 	"net"
 	"strings"
 	"testing"
@@ -344,9 +345,18 @@ func TestPipelinedCommands(t *testing.T) {
 		len(key), key, len(key), key,
 	)
 
-	got := sendRaw(t, conn, pipelined)
+	if _, err := conn.Write([]byte(pipelined)); err != nil {
+		t.Fatalf("failed to write pipelined payload: %v", err)
+	}
+
 	want := "+OK\r\n$3\r\nbar\r\n"
-	if got != want {
+	buf := make([]byte, len(want))
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if _, err := io.ReadFull(conn, buf); err != nil {
+		t.Fatalf("failed to read full pipelined response: %v", err)
+	}
+
+	if got := string(buf); got != want {
 		t.Errorf("expected %q, got %q", want, got)
 	}
 }
