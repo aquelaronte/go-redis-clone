@@ -275,7 +275,6 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("null bulk string", func(t *testing.T) {
-		t.Skip("TODO: parser does not yet recognize $-1\\r\\n as a null marker; followed by data it panics on r[-1]. Treated as incomplete today.")
 		input := []byte("$-1\r\n")
 		msgs, _, err := parser.Parse(input)
 
@@ -299,7 +298,6 @@ func TestParse(t *testing.T) {
 	// --- Array edges ---
 
 	t.Run("empty array", func(t *testing.T) {
-		t.Skip("TODO: at internal.go:87 the array branch treats `len(r) == 0` after the header as 'incomplete', so `*0\\r\\n` is misclassified as needing more data instead of returning an empty Array.")
 		input := []byte("*0\r\n")
 		msgs, _, err := parser.Parse(input)
 
@@ -352,7 +350,6 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("null array", func(t *testing.T) {
-		t.Skip("TODO: parser does not recognize *-1\\r\\n as a null marker; silently returns empty array.")
 		input := []byte("*-1\r\n")
 		msgs, _, err := parser.Parse(input)
 
@@ -374,7 +371,6 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("partial array waiting for more elements", func(t *testing.T) {
-		t.Skip("TODO: bug at internal.go:104-118 — when an array element is missing, parse() recurses into empty slice and panics on received[0]. Should return no message and the entire input as remaining.")
 		input := []byte("*2\r\n+OK\r\n")
 		msgs, remaining, err := parser.Parse(input)
 

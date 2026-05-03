@@ -7,6 +7,10 @@ import (
 )
 
 func parse(received []byte) (*resp.Message, []byte, error) {
+	if len(received) == 0 {
+		return nil, received, nil
+	}
+
 	firstCharacter := received[0]
 	var message *resp.Message
 	var remaining []byte
@@ -52,6 +56,18 @@ func parse(received []byte) (*resp.Message, []byte, error) {
 			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
+		if length == -1 {
+			if received[len(received)-2] == '\r' && received[len(received)-1] == '\n' {
+				message = &resp.Message{
+					MessageType: resp.BulkStringMessageType,
+				}
+				remaining = r
+				break
+			} else {
+				return nil, nil, errors.New("invalid message")
+			}
+		}
+
 		// the message is complete if the remaining has the length bytes + CRLF or more
 		isComplete := len(r) >= length+2
 
@@ -83,6 +99,14 @@ func parse(received []byte) (*resp.Message, []byte, error) {
 			return nil, nil, fmt.Errorf("invalid message %v", err)
 		}
 
+		if length <= 0 {
+			message = &resp.Message{
+				MessageType: resp.ArrayMessageType,
+			}
+			remaining = r
+			break
+		}
+
 		// There should be always a remaining
 		if len(r) == 0 {
 			remaining = received
@@ -102,8 +126,7 @@ func parse(received []byte) (*resp.Message, []byte, error) {
 			// If there are no message but no error, then
 			// the received data will be the remaining
 			if parsedMsg == nil {
-				remaining = received
-				break
+				return nil, received, nil
 			}
 
 			lastValue = parsedRem // Walk to the next remaining
