@@ -1,6 +1,6 @@
 package server
 
-var SupportedCommands []string = []string{
+var supportedCommands []string = []string{
 	"get",
 	"set",
 	"del",

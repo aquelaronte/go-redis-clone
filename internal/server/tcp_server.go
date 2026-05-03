@@ -17,12 +17,17 @@ func Start() {
 	defer listener.Close()
 	fmt.Println("redis clone listening on port 6379")
 
+	Serve(listener)
+}
+
+// Serve accepts connections from listener and dispatches them to the
+// connection handler. It returns when the listener is closed.
+func Serve(listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
 
 		if err != nil {
-			fmt.Println("error connecting")
-			continue
+			return
 		}
 
 		go handleConnection(conn)

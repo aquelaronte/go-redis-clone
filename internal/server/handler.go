@@ -19,7 +19,7 @@ func handleCommand(msg resp.Message, conn net.Conn) {
 	comparer := resp.NewComparer(command)
 	valuesLength := len(msg.Values)
 
-	switch comparer.RetrieveCommand(SupportedCommands) {
+	switch comparer.RetrieveCommand(supportedCommands) {
 	case "get":
 		if valuesLength != 2 {
 			sender.SendWrongNumberOfArguments("get")
